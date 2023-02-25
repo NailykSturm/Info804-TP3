@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Question 2.3 -> 2.7</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="css/basic.css">
+
+    <script src="three.js"></script>
+    <script src="js/Detector.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script type="text/javascript">
+
+        // Checks that your browser supports WebGL. 
+        if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+        var renderer = null;
+        var scene = null;
+        var camera = null;
+        var cameraAngle = 0;
+        var controls = null;
+        var curTime = Date.now();
+        var solarSystem = null;
+        var sun = null;
+        var earth = null;
+        var moon = null;
+        var moonOrbit = null;
+        var earthOrbit = null;
+        var earthgroup = null;
+
+        // This function is called whenever the document is loaded
+        function init() {
+            // Get display canvas
+            var canvas = document.getElementById("webglcanvas");
+            console.log(canvas);
+
+            // Create the Three.js renderer and attach it to our canvas
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true
+            });
+            // Set the viewport size
+            renderer.setSize(canvas.width, canvas.height);
+            // Create a new Three.js scene
+            scene = new THREE.Scene();
+            // Add  a camera so we can view the scene
+            camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 4000);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+            controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+            controls.dampingFactor = 0.25;
+            controls.screenSpacePanning = false;
+            controls.minDistance = 1;
+            controls.maxDistance = 20;
+
+            // Add background
+            var path = "images/MilkyWay/";
+            var format = '.jpg';
+            var urls = [
+                path + 'posx' + format, path + 'negx' + format,
+                path + 'posy' + format, path + 'negy' + format,
+                path + 'posz' + format, path + 'negz' + format
+            ];
+
+            var textureCube = new THREE.CubeTextureLoader().load(urls);
+            textureCube.format = THREE.RGBFormat;
+            scene.background = textureCube;
+
+            // Create a group to hold all the objects
+            solarSystem = new THREE.Group();
+            earthgroup = new THREE.Group();
+            earthOrbit = new THREE.Group();
+            moonOrbit = new THREE.Group();
+
+            var sunmaterial = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 1.25 });
+            var sungeometry = new THREE.SphereGeometry(1, 64, 32);
+            sun = new THREE.Mesh(sungeometry, sunmaterial);
+            solarSystem.add(sun);
+
+            // Create a texture-mapped cube and add it to the scene
+            // First, create the texture map
+            var mapUrl = "images/earth_atmos_2048.jpg";
+            var map = new THREE.TextureLoader().load(mapUrl);
+
+            // Now, create a Basic material; pass in the map
+            var earthmaterial = new THREE.MeshPhongMaterial({ map: map, specular: 0xC0C0C0, shininess: Math.PI });
+            // Create the cube geometry
+            var earhgeometry = new THREE.SphereGeometry(1, 64, 32);
+            // And put the geometry and material together into a mesh
+            earth = new THREE.Mesh(earhgeometry, earthmaterial);
+            // Move the mesh back from the camera and tilt it toward the viewer
+            earth.position.z = -10;
+            earth.rotation.x = Math.PI / 5;
+            earth.rotation.y = Math.PI / 5;
+
+            earthgroup.add(earth);
+            earthOrbit.add(earthgroup);
+
+            var moonmaterial = new THREE.MeshPhongMaterial({
+                map: new THREE.TextureLoader().load("images/moon_1024.jpg")
+                , specular: 0xa0a0a0, shininess: 0
+            });
+            var moongeometry = new THREE.SphereGeometry(0.5, 64, 32);
+            moon = new THREE.Mesh(moongeometry, moonmaterial);
+            moon.position.z = earth.position.z ;
+            moon.rotation.x = Math.PI / 5;
+            moon.rotation.y = Math.PI / 5;
+            moonOrbit.position.z = earth.position.z;
+            moonOrbit.position.x = earth.position.x;
+            moonOrbit.position.y = earth.position.y;
+            moonOrbit.add(moon);
+            earthgroup.add(moonOrbit);
+
+            solarSystem.add(earthOrbit);
+            // Finally, add the mesh to our scene
+            scene.add(solarSystem);
+
+            // Add a white point light
+            light = new THREE.PointLight(0xffffB5, 1, 0, 2);
+            light.position.set(sun.position.x, sun.position.y, sun.position.z);
+            scene.add(light);
+
+            renderer.shadowMap.enabled = true;
+            // rendu coûteux mais plus joli (default: THREE.PCFShadowMap)
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            light.castShadow = true;
+            // On peut aussi paramétrer la qualité du calcul
+            light.shadow.mapSize.width = 512;  // default
+            light.shadow.mapSize.height = 512; // default
+            light.shadow.camera.near = 0.5;    // default
+            light.shadow.camera.far = 50;
+
+            earth.castShadow = true;
+            earth.receiveShadow = true;
+            moon.castShadow = true;
+            moon.receiveShadow = true;
+
+            camera.lookAt(new THREE.Vector3().setFromMatrixPosition(sun.matrixWorld));
+        }
+
+        // This function is called regularly to update the canvas webgl.
+        function run() {
+            // Ask to call again run 
+            requestAnimationFrame(run);
+
+            // Render the scene
+            render();
+
+            // Calls the animate function if objects or camera should move
+            animate();
+        }
+
+        // This function is called regularly to take care of the rendering.
+        function render() {
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+
+        // This function is called regularly to update objects.
+        function animate() {
+            // Computes how time has changed since last display
+            var now = Date.now();
+            controls.update();
+            var deltaTime = now - curTime;
+            curTime = now;
+            var fracTime = deltaTime / 1000; // in seconds
+            // Now we can move objects, camera, etc.
+
+            var angle = Math.PI * 2 * fracTime; // one turn per 10 second.
+            earthgroup.rotation.y += angle / 365; // la terre tourne en 365 jours
+            earth.rotation.y += angle; // et en un jour sur elle-même
+
+            moonOrbit.rotation.y += angle / 28; // la lune tourne en 28 jours autour de la terre
+            moon.rotation.y += angle / 28; // et en 28 jours aussi sur elle-même pour faire face à la terre
+
+
+
+            // camera.lookAt( new THREE.Vector3().setFromMatrixPosition(earth.matrixWorld) );
+            // Avec un grand demi-axe de 5 et un petit demi-axe de 3
+            // camera.position.x += 5 * Math.cos(cameraAngle);
+            // camera.position.y += 3 * Math.sin(cameraAngle);
+            // controls.target = new THREE.Vector3().setFromMatrixPosition(sun.matrixWorld);
+        }
+
+    </script>
+</head>
+
+<body>
+    <div id="info"> Groupes et transformations géométriques </div>
+    <canvas id="webglcanvas" style="border: none;background-color:#000000" width="600" height="500"></canvas>
+    <!-- We run the WebGL code at the end to be sure that the document is loaded.
+      -->
+    <script>
+        init(); run();
+    </script>
+</body>
+
+</html>
