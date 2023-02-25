@@ -26,6 +26,7 @@
         var earth = null;
         var moon = null;
         var moonOrbit = null;
+        var moongroup = null;
         var earthOrbit = null;
         var earthgroup = null;
 
@@ -46,14 +47,15 @@
             scene = new THREE.Scene();
             // Add  a camera so we can view the scene
             camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 4000);
+            camera.position.set(0, 50, 0);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
             controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
             controls.dampingFactor = 0.25;
             controls.screenSpacePanning = false;
-            controls.minDistance = 1;
-            controls.maxDistance = 20;
+            controls.minDistance = 5;
+            controls.maxDistance = 10000;
 
             // Add background
             var path = "images/MilkyWay/";
@@ -75,7 +77,7 @@
             moonOrbit = new THREE.Group();
 
             var sunmaterial = new THREE.MeshPhongMaterial({ color: 0xffff00, emissive: 0xffff00, emissiveIntensity: 1.25 });
-            var sungeometry = new THREE.SphereGeometry(1, 64, 32);
+            var sungeometry = new THREE.SphereGeometry(10, 64, 32);
             sun = new THREE.Mesh(sungeometry, sunmaterial);
             solarSystem.add(sun);
 
@@ -87,14 +89,14 @@
             // Now, create a Basic material; pass in the map
             var earthmaterial = new THREE.MeshPhongMaterial({ map: map, specular: 0xC0C0C0, shininess: Math.PI });
             // Create the cube geometry
-            var earhgeometry = new THREE.SphereGeometry(1, 64, 32);
+            var earhgeometry = new THREE.SphereGeometry(2, 64, 32);
             // And put the geometry and material together into a mesh
             earth = new THREE.Mesh(earhgeometry, earthmaterial);
             // Move the mesh back from the camera and tilt it toward the viewer
-            earth.position.z = -10;
+            earth.position.z = -40;
             earth.rotation.x = Math.PI / 5;
             earth.rotation.y = Math.PI / 5;
-
+            earthgroup.position.set(0,0,0);
             earthgroup.add(earth);
             earthOrbit.add(earthgroup);
 
@@ -108,8 +110,8 @@
             moon.rotation.x = Math.PI / 5;
             moon.rotation.y = Math.PI / 5;
             moonOrbit.position.z = earth.position.z;
-            moonOrbit.position.x = earth.position.x;
-            moonOrbit.position.y = earth.position.y;
+            // moonOrbit.position.x = earth.position.x;
+            // moonOrbit.position.y = earth.position.y;
             moonOrbit.add(moon);
             earthgroup.add(moonOrbit);
 
@@ -168,7 +170,7 @@
             var fracTime = deltaTime / 1000; // in seconds
             // Now we can move objects, camera, etc.
 
-            var angle = Math.PI * 2 * fracTime; // one turn per 10 second.
+            var angle = Math.PI * 2 * fracTime * 10; // one turn per 10 second.
             earthgroup.rotation.y += angle / 365; // la terre tourne en 365 jours
             earth.rotation.y += angle; // et en un jour sur elle-même
 
@@ -189,7 +191,7 @@
 
 <body>
     <div id="info"> Groupes et transformations géométriques </div>
-    <canvas id="webglcanvas" style="border: none;background-color:#000000" width="600" height="500"></canvas>
+    <canvas id="webglcanvas" style="border: none;background-color:#000000" width="800" height="500"></canvas>
     <!-- We run the WebGL code at the end to be sure that the document is loaded.
       -->
     <script>
