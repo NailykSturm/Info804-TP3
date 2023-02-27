@@ -106,7 +106,9 @@
             });
             var moongeometry = new THREE.SphereGeometry(0.5, 64, 32);
             moon = new THREE.Mesh(moongeometry, moonmaterial);
-            moon.position.z = earth.position.z ;
+            moon.position.z = 5;
+            // moon.position.x = earth.position.x;
+            // moon.position.y = earth.position.y;
             moon.rotation.x = Math.PI / 5;
             moon.rotation.y = Math.PI / 5;
             moonOrbit.position.z = earth.position.z;
